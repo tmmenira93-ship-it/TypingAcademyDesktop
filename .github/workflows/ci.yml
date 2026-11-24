@@ -1,0 +1,58 @@
+name: typing-academy
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  # Keep this equal to the Flutter version you develop with (docs/BUILD.md was written with 3.24.5).
+  FLUTTER_VERSION: "3.24.5"
+
+jobs:
+  check:
+    name: analyze and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get
+      # Errors fail the job; infos (such as deprecations on newer Flutter) and warnings are only printed.
+      - run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - run: flutter test
+
+  windows:
+    name: windows exe
+    needs: check
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter config --enable-windows-desktop
+      - run: flutter pub get
+      - run: flutter build windows --release
+      - name: Check that sqlite3.dll is bundled
+        shell: pwsh
+        run: |
+          $dir = "build/windows/x64/runner/Release"
+          if (-not (Test-Path "$dir/typing_academy_desktop.exe")) { throw "exe not found in $dir" }
+          if (-not (Test-Path "$dir/sqlite3.dll")) {
+            throw "sqlite3.dll is missing next to the exe: the app would crash when it opens its database. Check that sqlite3_flutter_libs is in pubspec.yaml."
+          }
+          Get-ChildItem $dir | Select-Object Name, Length
+      - name: Zip the release folder
+        shell: pwsh
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath typing-academy-windows.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: typing-academy-windows
+          path: typing-academy-windows.zip

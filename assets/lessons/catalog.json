@@ -1,0 +1,3 @@
+{
+  "note": "Bundled lessons live in lib/data/lesson_catalog.dart so the trainer can load them offline without extra parsing. Add new lessons there without changing the engine."
+}
