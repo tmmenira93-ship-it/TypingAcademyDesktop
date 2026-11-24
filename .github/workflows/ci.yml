@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
 
 env:
-  # Keep this equal to the Flutter version you develop with (docs/BUILD.md was written with 3.24.5).
-  FLUTTER_VERSION: "3.24.5"
+  # Flutter 3.50.1 includes Dart 3.14 and supports the Visual Studio 2026 runner image.
+  FLUTTER_VERSION: "3.50.1"
 
 jobs:
   check:
@@ -22,7 +22,7 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
       - run: flutter pub get
-      # Errors fail the job; infos (such as deprecations on newer Flutter) and warnings are only printed.
+      # Errors fail the job; infos and warnings are only printed.
       - run: flutter analyze --no-fatal-infos --no-fatal-warnings
       - run: flutter test
 
